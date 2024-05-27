@@ -9,6 +9,9 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
+	"github.com/pulumi/pulumi-gcp/sdk/v7/go/gcp/cloudfunctionsv2"
+	"github.com/pulumi/pulumi/sdk/go/pulumi"
+	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 	"github.com/twilio/twilio-go"
 	api "github.com/twilio/twilio-go/rest/api/v2010"
 )
@@ -21,6 +24,22 @@ type goldResponse struct {
 }
 
 func main() {
+	pulumi.Run(func(ctx *pulumi.Context) error {
+		function, err := cloudfunctionsv2.NewFunction(ctx, "gold-alert", &cloudfunctionsv2.FuntionArgs{
+			Name:        pulumi.String("gold-alert"),
+			Location:    pulumi.String("eu-west1"),
+			Description: pulumi.String("Gold alerts on a polling api call"),
+			BuildConfig: &cloudfunctionsv2.FunctionBuildConfigArgs{
+				Runtime: pulumi.String("go"),
+			},
+		})
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
 	godotenv.Load()
 	response, err := getPrice()
 	if err != nil {
