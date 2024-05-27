@@ -2,10 +2,15 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/joho/godotenv"
+	"github.com/twilio/twilio-go"
+	api "github.com/twilio/twilio-go/rest/api/v2010"
 )
 
 type goldResponse struct {
@@ -16,6 +21,7 @@ type goldResponse struct {
 }
 
 func main() {
+	godotenv.Load()
 	response, err := getPrice()
 	if err != nil {
 		panic(err)
@@ -26,8 +32,25 @@ func main() {
 	}
 
 	if g.Price_gram_24k < 55 {
+		client := twilio.NewRestClient()
 
+		params := &api.CreateMessageParams{}
+		params.SetBody(fmt.Sprintf("Gold Price per gram: %f.4", g.Price_gram_24k))
+		params.SetFrom("+447446970386")
+		params.SetTo("+447391605016")
+
+		resp, err := client.Api.CreateMessage(params)
+		if err != nil {
+			fmt.Println(err.Error())
+		} else {
+			if resp.Sid != nil {
+				fmt.Println(*resp.Sid)
+			} else {
+				fmt.Println(resp.Sid)
+			}
+		}
 	}
+
 }
 
 func getPrice() ([]byte, error) {
@@ -35,7 +58,7 @@ func getPrice() ([]byte, error) {
 		Timeout: time.Duration(30 * time.Second),
 	}
 
-	req, err := http.NewRequest(http.MethodGet, "https://www.goldapi.io/api/XUA/GBP/", nil)
+	req, err := http.NewRequest(http.MethodGet, "https://www.goldapi.io/api/XAU/GBP/", nil)
 	if err != nil {
 		return []byte{}, err
 	}
